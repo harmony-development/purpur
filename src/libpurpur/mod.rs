@@ -2,6 +2,7 @@ use gtk::glib::Sender;
 use thiserror::Error;
 
 pub mod protocols;
+pub mod structures;
 
 #[derive(Debug)]
 pub enum UIAction {

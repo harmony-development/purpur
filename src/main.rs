@@ -31,7 +31,7 @@ fn main() -> glib::ExitCode {
         let mut protocol = BuiltinProtocols::from(IRCProtocol {});
         gio::spawn_blocking(move || protocol.connect(api));
 
-        let mut model = StringList::default();
+        let model = StringList::default();
 
         let factory = SignalListItemFactory::new();
         factory.connect_setup(move |_, list_item| {
