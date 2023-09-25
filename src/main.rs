@@ -1,82 +1,107 @@
-use gtk::prelude::*;
-use kanal::Receiver;
-use libpurpur::{PurpurAPI, UIAction};
-use relm4::{prelude::*, Worker};
+use std::{cell::{Cell, RefCell}, rc::Rc};
 
-use crate::libpurpur::protocols::{discord::Discord, BuiltinProtocols, Protocol};
+use dotenv::dotenv;
+use gtk::{
+    gio,
+    glib::{self, clone, MainContext, Priority},
+    prelude::*,
+    Application, ApplicationWindow, Button, Label, ListItem, ListView, NoSelection, PolicyType,
+    ScrolledWindow, SignalListItemFactory, StringList, StringObject,
+};
+use libpurpur::{PurpurAPI, UIAction};
+
+use crate::libpurpur::protocols::{
+    discord::DiscordProtocol, irc::IRCProtocol, BuiltinProtocols, Protocol,
+};
 
 pub mod libpurpur;
 
-struct App {}
+fn main() -> glib::ExitCode {
+    dotenv().ok();
 
-struct AsyncHandler;
+    // Create a new application
+    let app = Application::builder()
+        .application_id("dev.blusk.purpur")
+        .build();
 
-impl Worker for AsyncHandler {
-    type Init = ();
+    // Connect to "activate" signal of `app`
+    app.connect_activate(move |app| {
+        let (uitx, uirx) = MainContext::channel::<UIAction>(Priority::default());
+        let api = PurpurAPI { action_sender: uitx };
+        let mut protocol = BuiltinProtocols::from(IRCProtocol {});
+        gio::spawn_blocking(move || protocol.connect(api));
 
-    type Input = ();
+        let mut model = StringList::default();
 
-    type Output = UIAction;
-
-    fn init(_init: Self::Init, _sender: ComponentSender<Self>) -> Self {
-        Self
-    }
-
-    fn update(&mut self, _message: Self::Input, sender: ComponentSender<Self>) {}
-}
-
-#[relm4::component]
-impl SimpleComponent for App {
-    type Init = ();
-    type Input = UIAction;
-    type Output = ();
-
-    view! {
-        gtk::Window {
-            set_title: Some("Simple app"),
-            set_default_size: (300, 100),
-
-            gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
-                set_spacing: 5,
-                set_margin_all: 5,
-            }
-        }
-    }
-
-    // Initialize the component.
-    fn init(
-        counter: Self::Init,
-        root: &Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
-        let (tx, rx) = kanal::unbounded();
-        let api = PurpurAPI { action_sender: tx };
-
-        std::thread::spawn(move || {
-            let mut protocol = BuiltinProtocols::from(Discord {});
-            protocol.connect(api);
+        let factory = SignalListItemFactory::new();
+        factory.connect_setup(move |_, list_item| {
+            let label = Label::builder()
+                .halign(gtk::Align::Start)
+                .build();
+            list_item
+                .downcast_ref::<ListItem>()
+                .expect("Needs to be ListItem")
+                .set_child(Some(&label));
         });
+        factory.connect_bind(move |_, list_item| {
+            // Get `IntegerObject` from `ListItem`
+            let string_object = list_item
+                .downcast_ref::<ListItem>()
+                .expect("Needs to be ListItem")
+                .item()
+                .and_downcast::<StringObject>()
+                .expect("The item has to be an `IntegerObject`.");
 
-        std::thread::spawn(move || {
-            let a = rx.recv().unwrap();
-            sender.input(a);
+            // Get `Label` from `ListItem`
+            let label = list_item
+                .downcast_ref::<ListItem>()
+                .expect("Needs to be ListItem")
+                .child()
+                .and_downcast::<Label>()
+                .expect("The child has to be a `Label`.");
+
+            // Set "label" to "number"
+            label.set_label(&string_object.string().to_string());
         });
+        let selection_model = NoSelection::new(Some(model.clone()));
+        let list_box = ListView::new(Some(selection_model), Some(factory));
+        let scrolled_window = ScrolledWindow::builder()
+            .min_content_width(360)
+            .hexpand(false)
+            .margin_top(8)
+            .margin_bottom(8)
+            .margin_end(8)
+            .margin_start(8)
+            .child(&list_box)
+            .build();
 
-        let model = App {};
+        uirx.attach(
+            None,
+            clone!(@strong model, @weak scrolled_window => @default-return glib::ControlFlow::Break,
+                move |data| {
+                    match data {
+                        UIAction::NewMessage(s) => {
+                            model.append(&s);
+                            scrolled_window.vadjustment().set_value(scrolled_window.vadjustment().upper());
+                        },
+                        _ => {},
+                    };
+                    glib::ControlFlow::Continue
+                }
+            ),
+        );
 
-        // Insert the code generation of the view! macro here
-        let widgets = view_output!();
+        // Create a window
+        let window = ApplicationWindow::builder()
+            .application(app)
+            .title("Purpur")
+            .child(&scrolled_window)
+            .build();
 
-        ComponentParts { model, widgets }
-    }
+        // Present window
+        window.present();
+    });
 
-    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
-        println!("hello {:?}", msg);
-    }
-}
-
-fn main() {
-    let app = RelmApp::new("relm4.example.simple");
-    app.run::<App>(());
+    // Run the application
+    app.run()
 }

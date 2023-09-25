@@ -1,9 +1,10 @@
-use self::discord::Discord;
+use self::{discord::DiscordProtocol, irc::IRCProtocol};
 use enum_dispatch::enum_dispatch;
 
 use super::PurpurAPI;
 
 pub mod discord;
+pub mod irc;
 
 #[enum_dispatch]
 pub trait Protocol {
@@ -13,5 +14,6 @@ pub trait Protocol {
 
 #[enum_dispatch(Protocol)]
 pub enum BuiltinProtocols {
-    Discord
+    DiscordProtocol,
+    IRCProtocol,
 }

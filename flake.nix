@@ -24,7 +24,7 @@
         crateOutputs = config.nci.outputs."purpur";
       in {
         devShells.default = crateOutputs.devShell.overrideAttrs (old: {
-          packages = (old.packages or []) ++ (with pkgs; [ pkg-config gtk4 ]);
+          packages = (old.packages or []) ++ (with pkgs; [ pkg-config gtk4 openssl libsodium ]);
         });
         packages.default = crateOutputs.packages.release;
       };

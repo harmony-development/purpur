@@ -1,11 +1,12 @@
-use kanal::Sender;
+use gtk::glib::Sender;
 use thiserror::Error;
 
 pub mod protocols;
 
 #[derive(Debug)]
 pub enum UIAction {
-    SetChannelList(Vec<String>)
+    SetChannelList(Vec<String>),
+    NewMessage(String)
 }
 
 #[derive(Error, Debug)]
