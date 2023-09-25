@@ -1,0 +1,10 @@
+[package]
+name = "purpur"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+enum_dispatch = "0.3.12"
+kanal = "0.1.0-pre8"
+relm4 = "0.6.2"
+thiserror = "1.0.48"
