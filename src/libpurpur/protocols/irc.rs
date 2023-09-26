@@ -9,10 +9,12 @@ pub struct IRCProtocol {}
 
 impl Protocol for IRCProtocol {
     fn connect(&mut self, api: PurpurAPI) {
+        println!("meow1");
         let rt = Runtime::new().unwrap();
         rt.block_on(async {
+            println!("meow");
             let mut client = Client::from_config(Config {
-                nickname: Some("aefiouawhefuioawei".into()),
+                nickname: Some("silicat".into()),
                 server: Some("tilde.chat".into()),
                 channels: vec![
                     "#meta".to_owned(),

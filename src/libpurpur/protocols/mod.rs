@@ -1,10 +1,11 @@
-use self::{discord::DiscordProtocol, irc::IRCProtocol};
+use self::{discord::DiscordProtocol, irc::IRCProtocol, matrix::MatrixProtocol};
 use enum_dispatch::enum_dispatch;
 
 use super::PurpurAPI;
 
 pub mod discord;
 pub mod irc;
+pub mod matrix;
 
 #[enum_dispatch]
 pub trait Protocol {
@@ -16,4 +17,5 @@ pub trait Protocol {
 pub enum BuiltinProtocols {
     DiscordProtocol,
     IRCProtocol,
+    MatrixProtocol,
 }

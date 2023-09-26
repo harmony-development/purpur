@@ -1,20 +1,19 @@
-use std::{cell::{Cell, RefCell}, rc::Rc};
-
 use dotenv::dotenv;
 use gtk::{
     gio,
     glib::{self, clone, MainContext, Priority},
     prelude::*,
-    Application, ApplicationWindow, Button, Label, ListItem, ListView, NoSelection, PolicyType,
+    Application, ApplicationWindow, Label, ListItem, ListView, NoSelection, PolicyType,
     ScrolledWindow, SignalListItemFactory, StringList, StringObject,
 };
-use libpurpur::{PurpurAPI, UIAction};
+use libpurpur::{PurpurAPI, UIAction, protocols::matrix::MatrixProtocol};
 
 use crate::libpurpur::protocols::{
-    discord::DiscordProtocol, irc::IRCProtocol, BuiltinProtocols, Protocol,
+    irc::IRCProtocol, BuiltinProtocols, Protocol,
 };
 
 pub mod libpurpur;
+pub mod ui;
 
 fn main() -> glib::ExitCode {
     dotenv().ok();
@@ -28,7 +27,7 @@ fn main() -> glib::ExitCode {
     app.connect_activate(move |app| {
         let (uitx, uirx) = MainContext::channel::<UIAction>(Priority::default());
         let api = PurpurAPI { action_sender: uitx };
-        let mut protocol = BuiltinProtocols::from(IRCProtocol {});
+        let mut protocol = BuiltinProtocols::from(MatrixProtocol {});
         gio::spawn_blocking(move || protocol.connect(api));
 
         let model = StringList::default();
@@ -81,6 +80,7 @@ fn main() -> glib::ExitCode {
                 move |data| {
                     match data {
                         UIAction::NewMessage(s) => {
+                            println!("{:?}", s);
                             model.append(&s);
                             scrolled_window.vadjustment().set_value(scrolled_window.vadjustment().upper());
                         },
