@@ -6,7 +6,7 @@ use gtk::{
     Application, ApplicationWindow, Label, ListItem, ListView, NoSelection, PolicyType,
     ScrolledWindow, SignalListItemFactory, StringList, StringObject,
 };
-use libpurpur::{PurpurAPI, UIAction, protocols::matrix::MatrixProtocol};
+use libpurpur::{PurpurAPI, Update, protocols::matrix::MatrixProtocol};
 
 use crate::libpurpur::protocols::{
     irc::IRCProtocol, BuiltinProtocols, Protocol,
@@ -25,8 +25,8 @@ fn main() -> glib::ExitCode {
 
     // Connect to "activate" signal of `app`
     app.connect_activate(move |app| {
-        let (uitx, uirx) = MainContext::channel::<UIAction>(Priority::default());
-        let api = PurpurAPI { action_sender: uitx };
+        let (uitx, uirx) = MainContext::channel::<Update>(Priority::default());
+        let api = PurpurAPI { update_sender: uitx };
         let mut protocol = BuiltinProtocols::from(MatrixProtocol {});
         gio::spawn_blocking(move || protocol.connect(api));
 
@@ -79,7 +79,7 @@ fn main() -> glib::ExitCode {
             clone!(@strong model, @weak scrolled_window => @default-return glib::ControlFlow::Break,
                 move |data| {
                     match data {
-                        UIAction::NewMessage(s) => {
+                        Update::NewMessage(s) => {
                             println!("{:?}", s);
                             model.append(&s);
                             scrolled_window.vadjustment().set_value(scrolled_window.vadjustment().upper());

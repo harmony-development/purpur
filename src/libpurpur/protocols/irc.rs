@@ -1,4 +1,4 @@
-use crate::libpurpur::{PurpurAPI, UIAction};
+use crate::libpurpur::{PurpurAPI, Update};
 use futures::StreamExt;
 use irc::client::prelude::*;
 use tokio::runtime::Runtime;
@@ -28,11 +28,14 @@ impl Protocol for IRCProtocol {
             client.identify().unwrap();
             let mut stream = client.stream().unwrap();
             while let Some(message) = stream.next().await.transpose().unwrap() {
-                api.send_ui_action(UIAction::NewMessage(message.to_string()))
-                    .unwrap();
+                api.send_update(Update::NewMessage(message.to_string())).unwrap();
             }
         });
     }
 
     fn disconnect(&mut self) {}
+
+    fn query(&mut self,query:crate::libpurpur::Query) {
+        todo!()
+    }
 }
