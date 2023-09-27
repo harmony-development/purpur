@@ -1,3 +1,4 @@
+use super::Identifier;
 use super::image::Image;
 
 /// The style that the child channels get rendered as
@@ -24,10 +25,10 @@ pub enum ChannelPlacement {
 
 #[derive(Debug, Clone)]
 pub struct Channel {
-    pub id: String,
+    pub id: Identifier<Channel>,
     pub name: String,
     pub image: Image,
-    pub children: Option<Vec<Channel>>,
+    pub children: Option<Vec<Identifier<Channel>>>,
     pub preferred_render_style: RenderStyle,
     pub placement: ChannelPlacement,
 }

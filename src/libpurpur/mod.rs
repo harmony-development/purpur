@@ -1,7 +1,7 @@
 use gtk::glib::Sender;
 use thiserror::Error;
 
-use self::structures::channels::Channel;
+use self::structures::{channels::{Channel, RenderStyle, ChannelPlacement}, Identifier, image::Image, notification::Notification};
 
 pub mod protocols;
 pub mod structures;
@@ -15,24 +15,23 @@ pub enum NotificationLevel {
 }
 
 #[derive(Debug, Clone)]
-pub enum UIAction {
-    SetChannelList(Vec<Channel>),
+pub enum Update {
+    /// A new channel has been loaded/created.
+    /// This update is guaranteed to come before the application has its ID.
+    /// Changes to the channel will be reported through separate updates.
+    NewChannel(Channel),
+    ChannelName(Identifier<Channel>, String),
+    ChannelImage(Identifier<Channel>, Image),
+    ChannelChildren(Identifier<Channel>, Vec<Identifier<Channel>>),
+    ChannelPreferredRenderStyle(Identifier<Channel>, RenderStyle),
+    ChannelPlacement(Identifier<Channel>, ChannelPlacement),
+    Notification(Notification),
     NewMessage(String),
-    /// Shows a notification with the text with a specified severity.
-    /// Callback fires when its dismissed / closed.
-    SendNotification {
-        /// The severity of the notification
-        level: NotificationLevel,
-        /// The class of the notification, notifications of a certain nature should be given the
-        /// same class, for example "Login Failed" should produce a notification of class
-        /// me.blusk.purpur-discord.login-failed
-        class: String,
-        /// Notification title
-        title: String,
-        /// Notification body
-        body: String,
-        cb: fn() -> (),
-    },
+}
+
+#[derive(Debug, Clone)]
+pub enum Query {
+    DismissNotification(Identifier<Notification>),
 }
 
 #[derive(Error, Debug)]
@@ -42,12 +41,12 @@ pub enum SDKError {
 }
 
 pub struct PurpurAPI {
-    pub action_sender: Sender<UIAction>,
+    pub update_sender: Sender<Update>,
 }
 
 impl PurpurAPI {
-    pub fn send_ui_action(&self, action: UIAction) -> Result<(), SDKError> {
-        self.action_sender
+    pub fn send_update(&self, action: Update) -> Result<(), SDKError> {
+        self.update_sender
             .send(action)
             .map_err(|_| SDKError::SendFailure)
     }

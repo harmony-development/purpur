@@ -75,4 +75,8 @@ impl Protocol for MatrixProtocol {
     fn disconnect(&mut self) {
         todo!()
     }
+
+    fn query(&mut self,query:crate::libpurpur::Query) {
+        todo!()
+    }
 }
