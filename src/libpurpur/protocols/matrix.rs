@@ -15,6 +15,7 @@ use matrix_sdk_ui::{
     RoomListService,
 };
 use tokio::runtime::Runtime;
+use tracing::{debug, error, info, trace, Instrument};
 
 enum RoomTrackingState {}
 
@@ -33,12 +34,11 @@ impl Connected {
         let room = self.room_list_service.room(room_id).await.unwrap();
         let (mut current_events, mut sub) = room.timeline().await.subscribe().await;
         let (sender, receiver) = kanal::unbounded_async();
-        tokio::spawn(async move {
-            println!("tracking room: {}", room.id());
+        let task = async move {
+            debug!("tracking room");
             // TODO(dusk): this is just temporary, we'll want to write separate handles for "real" events and virtual events
             // and also handle pushbacks / pushfronts and set etc. properly
             let handle_event = |event: &TimelineItem| {
-                println!("new event in room {}: {:?}", room.id(), event);
                 // TODO(dusk): this is just here for now so we can see every message that is sent
                 if let Some(message) = event.as_event().and_then(|v| v.content().as_message()) {
                     api.send_update(crate::libpurpur::Update::NewMessage(
@@ -49,7 +49,9 @@ impl Connected {
             };
             // handle diffs
             while let Some(diff) = sub.next().await {
+                debug!("diff: {:?}", diff);
                 match diff {
+                    // TODO(dusk): i dont think this actually gets used?
                     VectorDiff::Append { values } => {
                         for event in values.iter() {
                             handle_event(event);
@@ -60,7 +62,6 @@ impl Connected {
                         current_events.clear();
                     }
                     VectorDiff::Set { index, value } => {
-                        handle_event(&value);
                         current_events.set(index, value);
                     }
                     VectorDiff::PushBack { value } => {
@@ -71,14 +72,18 @@ impl Connected {
                         handle_event(&value);
                         current_events.push_front(value);
                     }
+                    VectorDiff::Remove { index } => {
+                        current_events.remove(index);
+                    }
                     x => {
-                        eprintln!("unimplemented room diff: {x:?}");
+                        error!("unimplemented room diff: {x:?}");
                         sender.close();
                         break;
                     }
                 }
             }
-        });
+        };
+        tokio::spawn(task.instrument(tracing::info_span!("room tracking", room_id = %room_id)));
         receiver
     }
 }
@@ -121,7 +126,7 @@ impl MatrixProtocol {
 impl Protocol for MatrixProtocol {
     fn connect(&mut self, api: PurpurAPI) {
         let rt = Runtime::new().unwrap();
-        let result = rt.block_on(async move {
+        let task = async move {
             let account = UserId::parse(env::var("MATRIX_USER").unwrap()).unwrap();
             let client = Client::builder()
                 .server_name(account.server_name())
@@ -139,37 +144,38 @@ impl Protocol for MatrixProtocol {
             sync_service.start().await;
 
             let mut sync_service_state = sync_service.state();
-
-            tokio::spawn(async move {
+            let sync_state_task = async move {
                 if let Some(state) = sync_service_state.next().await {
                     match state {
                         State::Terminated => {
-                            println!("The process has been terminated.");
+                            info!("The process has been terminated.");
                         }
                         State::Idle => {
-                            println!("The system is currently idle.");
+                            debug!("The system is currently idle.");
                         }
                         State::Running => {
-                            println!("The system is currently running.");
+                            debug!("The system is currently running.");
                         }
                         State::Error => {
-                            println!("An error has occurred.");
+                            error!("An error has occurred.");
                         }
                     }
                 }
-            });
+            };
+            tokio::spawn(sync_state_task.in_current_span());
 
             self.connected = Some(Connected {
                 room_list_service: sync_service.room_list_service(),
                 sync_service: Arc::new(sync_service),
                 api,
             });
+            info!("connected to matrix");
 
             let (mut room_list, mut subscriber) =
                 self.room_list_service().all_rooms().await?.entries();
 
             let connected = self.connected();
-            let rooms_handle = tokio::spawn(async move {
+            let rooms_task = async move {
                 let mut rooms_being_tracked: HashMap<OwnedRoomId, RoomStateChangeStream> =
                     HashMap::new();
                 while let Some(entries) = subscriber.next().await {
@@ -181,7 +187,7 @@ impl Protocol for MatrixProtocol {
                         }
                     }
                     for room_id in rooms_to_stop_tracking {
-                        println!("stopped tracking room: {room_id}");
+                        debug!("stopped tracking room: {room_id}");
                         rooms_being_tracked.remove(&room_id);
                     }
                     // process diffs
@@ -193,7 +199,8 @@ impl Protocol for MatrixProtocol {
                             VectorDiff::Set { index, value } => {
                                 if let RoomListEntry::Filled(id) = &value {
                                     if !rooms_being_tracked.contains_key(id) {
-                                        let stream = connected.track_room(id).await;
+                                        let stream =
+                                            connected.track_room(id).in_current_span().await;
                                         rooms_being_tracked.insert(id.clone(), stream);
                                     }
                                 }
@@ -203,13 +210,15 @@ impl Protocol for MatrixProtocol {
                         }
                     }
                 }
-            });
+            };
+            let rooms_handle = tokio::spawn(rooms_task.in_current_span());
             rooms_handle.await?;
 
             anyhow::Ok(())
-        });
+        };
+        let result = rt.block_on(task.instrument(tracing::info_span!("matrix")));
         if let Err(err) = result {
-            eprintln!("matrix error: {err}");
+            error!("matrix error: {err}");
         }
     }
 

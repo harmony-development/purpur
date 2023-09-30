@@ -7,6 +7,8 @@ use gtk::{
     ScrolledWindow, SignalListItemFactory, StringList, StringObject,
 };
 use libpurpur::{protocols::matrix::MatrixProtocol, PurpurAPI, Update};
+use tracing::metadata::LevelFilter;
+use tracing_subscriber::{fmt, prelude::*};
 
 use crate::libpurpur::protocols::{irc::IRCProtocol, BuiltinProtocols, Protocol};
 
@@ -15,6 +17,18 @@ pub mod ui;
 
 fn main() -> glib::ExitCode {
     dotenv().ok();
+
+    let fmt_layer = fmt::layer();
+    let filter_layer = tracing_subscriber::filter::Targets::new()
+        .with_default(LevelFilter::INFO)
+        .with_target("matrix_sdk_ui", LevelFilter::ERROR)
+        .with_target("matrix_sdk_crypto", LevelFilter::ERROR)
+        .with_target("purpur", LevelFilter::DEBUG);
+
+    tracing_subscriber::registry()
+        .with(filter_layer)
+        .with(fmt_layer)
+        .init();
 
     // Create a new application
     let app = Application::builder()
@@ -78,7 +92,7 @@ fn main() -> glib::ExitCode {
                 move |data| {
                     match data {
                         Update::NewMessage(s) => {
-                            println!("{:?}", s);
+                            // println!("{:?}", s);
                             model.append(&s);
                             scrolled_window.vadjustment().set_value(scrolled_window.vadjustment().upper());
                         },
