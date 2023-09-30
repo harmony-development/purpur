@@ -1,18 +1,20 @@
+use std::thread;
+
 use dotenv::dotenv;
 use gtk::{
     gio,
     glib::{self, clone, MainContext, Priority},
     prelude::*,
-    Application, ApplicationWindow, Label, ListItem, ListView, NoSelection, PolicyType,
+    Application, ApplicationWindow, Label, ListItem, ListView, NoSelection,
     ScrolledWindow, SignalListItemFactory, StringList, StringObject,
 };
 use libpurpur::{protocols::matrix::MatrixProtocol, PurpurAPI, Update};
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::{fmt, prelude::*};
+use tokio::sync::mpsc;
 
-use crate::libpurpur::protocols::{irc::IRCProtocol, BuiltinProtocols, Protocol};
+use libpurpur::protocols::{BuiltinProtocols, Protocol};
 
-pub mod libpurpur;
 pub mod ui;
 
 fn main() -> glib::ExitCode {
@@ -37,8 +39,16 @@ fn main() -> glib::ExitCode {
 
     // Connect to "activate" signal of `app`
     app.connect_activate(move |app| {
-        let (uitx, uirx) = MainContext::channel::<Update>(Priority::default());
-        let api = PurpurAPI { update_sender: uitx };
+        let (update_tx, mut update_rx) = mpsc::channel(32);
+        let (glib_update_tx, glib_update_rx) = MainContext::channel::<Update>(Priority::DEFAULT);
+        thread::spawn(|| {
+            tokio::spawn(async move {
+                while let Some(message) = update_rx.recv().await {
+                    glib_update_tx.send(message).unwrap();
+                }
+            });
+        });
+        let api = PurpurAPI::new(update_tx);
         let mut protocol = BuiltinProtocols::from(MatrixProtocol::new());
         gio::spawn_blocking(move || protocol.connect(api));
 
@@ -86,7 +96,7 @@ fn main() -> glib::ExitCode {
             .child(&list_box)
             .build();
 
-        uirx.attach(
+        glib_update_rx.attach(
             None,
             clone!(@strong model, @weak scrolled_window => @default-return glib::ControlFlow::Break,
                 move |data| {

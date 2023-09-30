@@ -29,6 +29,18 @@ struct Connected {
 }
 
 impl Connected {
+    // TODO(dusk): this is just temporary, we'll want to write separate handles for "real" events and virtual events
+    // and also handle pushbacks / pushfronts and set etc. properly
+    async fn handle_event(api: &PurpurAPI, event: &Arc<TimelineItem>) {
+        // TODO(dusk): this is just here for now so we can see every message that is sent
+        if let Some(message) = event.as_event().and_then(|v| v.content().as_message()) {
+            api.send_update(crate::Update::NewMessage(
+                message.body().to_owned(),
+            ))
+            .await
+            .unwrap();
+        }
+    }
     async fn track_room(&self, room_id: &RoomId) -> RoomStateChangeStream {
         let api = self.api.clone();
         let room = self.room_list_service.room(room_id).await.unwrap();
@@ -36,17 +48,6 @@ impl Connected {
         let (sender, receiver) = kanal::unbounded_async();
         let task = async move {
             debug!("tracking room");
-            // TODO(dusk): this is just temporary, we'll want to write separate handles for "real" events and virtual events
-            // and also handle pushbacks / pushfronts and set etc. properly
-            let handle_event = |event: &TimelineItem| {
-                // TODO(dusk): this is just here for now so we can see every message that is sent
-                if let Some(message) = event.as_event().and_then(|v| v.content().as_message()) {
-                    api.send_update(crate::Update::NewMessage(
-                        message.body().to_owned(),
-                    ))
-                    .unwrap();
-                }
-            };
             // handle diffs
             while let Some(diff) = sub.next().await {
                 debug!("diff: {:?}", diff);
@@ -54,7 +55,7 @@ impl Connected {
                     // TODO(dusk): i dont think this actually gets used?
                     VectorDiff::Append { values } => {
                         for event in values.iter() {
-                            handle_event(event);
+                            Self::handle_event(&api, event).await;
                         }
                         current_events.append(values);
                     }
@@ -65,11 +66,11 @@ impl Connected {
                         current_events.set(index, value);
                     }
                     VectorDiff::PushBack { value } => {
-                        handle_event(&value);
+                        Self::handle_event(&api, &value).await;
                         current_events.push_back(value);
                     }
                     VectorDiff::PushFront { value } => {
-                        handle_event(&value);
+                        Self::handle_event(&api, &value).await;
                         current_events.push_front(value);
                     }
                     VectorDiff::Remove { index } => {

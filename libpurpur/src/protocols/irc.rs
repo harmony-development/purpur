@@ -29,6 +29,7 @@ impl Protocol for IRCProtocol {
             let mut stream = client.stream().unwrap();
             while let Some(message) = stream.next().await.transpose().unwrap() {
                 api.send_update(Update::NewMessage(message.to_string()))
+                    .await
                     .unwrap();
             }
         });

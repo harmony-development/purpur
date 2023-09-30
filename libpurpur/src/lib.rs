@@ -1,5 +1,5 @@
-use gtk::glib::Sender;
 use thiserror::Error;
+use tokio::sync::mpsc::Sender;
 
 use self::structures::{
     channels::{Channel, ChannelPlacement, RenderStyle},
@@ -18,6 +18,15 @@ pub enum NotificationLevel {
     Warning,
     Error,
 }
+
+const _: () = {
+    fn assert_type<T: Send + Sync>() {}
+
+    fn assert() {
+        assert_type::<Update>();
+        assert_type::<Query>();
+    }
+};
 
 #[derive(Debug, Clone)]
 pub enum Update {
@@ -47,13 +56,14 @@ pub enum SDKError {
 
 #[derive(Clone)]
 pub struct PurpurAPI {
-    pub update_sender: Sender<Update>,
+    update_sender: Sender<Update>,
 }
 
 impl PurpurAPI {
-    pub fn send_update(&self, action: Update) -> Result<(), SDKError> {
-        self.update_sender
-            .send(action)
-            .map_err(|_| SDKError::SendFailure)
+    pub async fn send_update(&self, action: Update) -> Result<(), SDKError> {
+        self.update_sender.send(action).await.map_err(|_| SDKError::SendFailure)
+    }
+    pub fn new(with: Sender<Update>) -> PurpurAPI {
+        PurpurAPI { update_sender: with }
     }
 }

@@ -25,9 +25,11 @@ impl Protocol for DiscordProtocol {
             children: None,
             preferred_render_style: RenderStyle::IconsAndText(false),
             placement: ChannelPlacement::Side(false),
-        });
-        names.for_each(|x| {
-            api.send_update(Update::NewChannel(x));
+        }).collect::<Vec<Channel>>();
+        tokio::spawn(async move {
+            for name in names {
+                api.send_update(Update::NewChannel(name)).await.unwrap();
+            }
         });
     }
 
