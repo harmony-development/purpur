@@ -1,5 +1,5 @@
-use super::Identifier;
 use super::image::Image;
+use super::Identifier;
 
 /// The style that the child channels get rendered as
 #[derive(Debug, Clone)]

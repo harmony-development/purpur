@@ -1,7 +1,8 @@
 use crate::libpurpur::{
     structures::{
         channels::{Channel, ChannelPlacement, RenderStyle},
-        image::Image, Identifier,
+        image::Image,
+        Identifier,
     },
     Update,
 };
@@ -32,7 +33,7 @@ impl Protocol for DiscordProtocol {
 
     fn disconnect(&mut self) {}
 
-    fn query(&mut self,query:crate::libpurpur::Query) {
+    fn query(&mut self, query: crate::libpurpur::Query) {
         todo!()
     }
 }
