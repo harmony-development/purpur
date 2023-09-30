@@ -4,15 +4,21 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.75"
-discord = { version = "0.9.0", git = "https://github.com/ThanePatrol/discord-rs.git" }
 dotenv = "0.15.0"
-enum_dispatch = "0.3.12"
-futures = "0.3.28"
-gtk = { version = "0.7.3", package = "gtk4", features = ["v4_8"] }
-irc = "0.15.0"
-kanal = "0.1.0-pre8"
-matrix-sdk = { git = "https://github.com/matrix-org/matrix-rust-sdk.git" }
-matrix-sdk-ui = { git = "https://github.com/matrix-org/matrix-rust-sdk.git" }
+anyhow = "1.0.75"
 thiserror = "1.0.48"
 tokio = { version = "1.32.0", features = ["full"] }
+kanal = "0.1.0-pre8"
+futures = "0.3.28"
+enum_dispatch = "0.3.12"
+# gui
+gtk = { version = "0.7.3", package = "gtk4", features = ["v4_8"] }
+# discord
+discord = { version = "0.9.0", git = "https://github.com/ThanePatrol/discord-rs.git" }
+# irc
+irc = "0.15.0"
+# matrix
+matrix-sdk = { git = "https://github.com/matrix-org/matrix-rust-sdk.git" }
+matrix-sdk-ui = { git = "https://github.com/matrix-org/matrix-rust-sdk.git" }
+eyeball-im = "0.4.1"
+imbl = "2"

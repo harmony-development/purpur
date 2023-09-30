@@ -6,11 +6,9 @@ use gtk::{
     Application, ApplicationWindow, Label, ListItem, ListView, NoSelection, PolicyType,
     ScrolledWindow, SignalListItemFactory, StringList, StringObject,
 };
-use libpurpur::{PurpurAPI, Update, protocols::matrix::MatrixProtocol};
+use libpurpur::{protocols::matrix::MatrixProtocol, PurpurAPI, Update};
 
-use crate::libpurpur::protocols::{
-    irc::IRCProtocol, BuiltinProtocols, Protocol,
-};
+use crate::libpurpur::protocols::{irc::IRCProtocol, BuiltinProtocols, Protocol};
 
 pub mod libpurpur;
 pub mod ui;
@@ -27,7 +25,7 @@ fn main() -> glib::ExitCode {
     app.connect_activate(move |app| {
         let (uitx, uirx) = MainContext::channel::<Update>(Priority::default());
         let api = PurpurAPI { update_sender: uitx };
-        let mut protocol = BuiltinProtocols::from(MatrixProtocol {});
+        let mut protocol = BuiltinProtocols::from(MatrixProtocol::new());
         gio::spawn_blocking(move || protocol.connect(api));
 
         let model = StringList::default();

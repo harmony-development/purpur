@@ -1,7 +1,12 @@
 use gtk::glib::Sender;
 use thiserror::Error;
 
-use self::structures::{channels::{Channel, RenderStyle, ChannelPlacement}, Identifier, image::Image, notification::Notification};
+use self::structures::{
+    channels::{Channel, ChannelPlacement, RenderStyle},
+    image::Image,
+    notification::Notification,
+    Identifier,
+};
 
 pub mod protocols;
 pub mod structures;
@@ -40,6 +45,7 @@ pub enum SDKError {
     SendFailure,
 }
 
+#[derive(Clone)]
 pub struct PurpurAPI {
     pub update_sender: Sender<Update>,
 }
