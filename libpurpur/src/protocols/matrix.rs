@@ -1,7 +1,7 @@
 use std::{env, sync::Arc};
 
 use super::Protocol;
-use crate::libpurpur::PurpurAPI;
+use crate::PurpurAPI;
 use eyeball_im::VectorDiff;
 use futures::StreamExt;
 use imbl::{HashMap, HashSet};
@@ -41,7 +41,7 @@ impl Connected {
             let handle_event = |event: &TimelineItem| {
                 // TODO(dusk): this is just here for now so we can see every message that is sent
                 if let Some(message) = event.as_event().and_then(|v| v.content().as_message()) {
-                    api.send_update(crate::libpurpur::Update::NewMessage(
+                    api.send_update(crate::Update::NewMessage(
                         message.body().to_owned(),
                     ))
                     .unwrap();
@@ -226,7 +226,7 @@ impl Protocol for MatrixProtocol {
         todo!()
     }
 
-    fn query(&mut self, query: crate::libpurpur::Query) {
+    fn query(&mut self, query: crate::Query) {
         todo!()
     }
 }

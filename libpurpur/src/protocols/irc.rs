@@ -1,4 +1,4 @@
-use crate::libpurpur::{PurpurAPI, Update};
+use crate::{PurpurAPI, Update};
 use futures::StreamExt;
 use irc::client::prelude::*;
 use tokio::runtime::Runtime;
@@ -36,7 +36,7 @@ impl Protocol for IRCProtocol {
 
     fn disconnect(&mut self) {}
 
-    fn query(&mut self, query: crate::libpurpur::Query) {
+    fn query(&mut self, query: crate::Query) {
         todo!()
     }
 }

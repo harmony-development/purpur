@@ -1,26 +1,6 @@
-[package]
-name = "purpur"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-dotenv = "0.15.0"
-anyhow = "1.0.75"
-thiserror = "1.0.48"
-tokio = { version = "1.32.0", features = ["full"] }
-kanal = "0.1.0-pre8"
-futures = "0.3.28"
-enum_dispatch = "0.3.12"
-tracing = "0.1"
-tracing-subscriber = {version = "0.3", features = ["env-filter"]}
-# gui
-gtk = { version = "0.7.3", package = "gtk4", features = ["v4_8"] }
-# discord
-discord = { version = "0.9.0", git = "https://github.com/ThanePatrol/discord-rs.git" }
-# irc
-irc = "0.15.0"
-# matrix
-matrix-sdk = { git = "https://github.com/matrix-org/matrix-rust-sdk.git" }
-matrix-sdk-ui = { git = "https://github.com/matrix-org/matrix-rust-sdk.git" }
-eyeball-im = "0.4.1"
-imbl = "2"
+[workspace]
+resolver = "2"
+members = [
+	"libpurpur",
+	"app",
+]
