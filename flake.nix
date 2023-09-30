@@ -23,6 +23,10 @@
       }: let
         crateOutputs = config.nci.outputs."purpur";
       in {
+        nci.toolchainConfig = {
+          channel = "stable";
+          components = ["rust-analyzer" "rust-src" "clippy" "rustfmt"];
+        };
         devShells.default = crateOutputs.devShell.overrideAttrs (old: {
           packages = (old.packages or []) ++ (with pkgs; [ pkg-config gtk4 openssl libsodium.dev sqlite ]);
         });
