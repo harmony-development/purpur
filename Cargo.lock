@@ -122,6 +122,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
 
 [[package]]
+name = "app"
+version = "0.1.0"
+dependencies = [
+ "dotenv",
+ "gtk4",
+ "libpurpur",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "arrayref"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2452,6 +2464,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7012b1bbb0719e1097c47611d3898568c546d597c2e74d66f6087edd5233ff4"
 
 [[package]]
+name = "libpurpur"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "discord",
+ "enum_dispatch",
+ "eyeball-im",
+ "futures",
+ "imbl",
+ "irc",
+ "kanal",
+ "matrix-sdk",
+ "matrix-sdk-ui",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "libsodium-sys"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3832,28 +3864,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "purpur"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "discord",
- "dotenv",
- "enum_dispatch",
- "eyeball-im",
- "futures",
- "gtk4",
- "imbl",
- "irc",
- "kanal",
- "matrix-sdk",
- "matrix-sdk-ui",
- "thiserror",
- "tokio",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

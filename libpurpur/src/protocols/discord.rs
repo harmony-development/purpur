@@ -1,4 +1,4 @@
-use crate::libpurpur::{
+use crate::{
     structures::{
         channels::{Channel, ChannelPlacement, RenderStyle},
         image::Image,
@@ -13,7 +13,7 @@ use super::Protocol;
 pub struct DiscordProtocol {}
 
 impl Protocol for DiscordProtocol {
-    fn connect(&mut self, api: crate::libpurpur::PurpurAPI) {
+    fn connect(&mut self, api: crate::PurpurAPI) {
         let client =
             Discord::from_user_token(std::env::var("DISCORD_TOKEN").unwrap().as_str()).unwrap();
         let (conn, _) = client.connect().unwrap();
@@ -25,15 +25,17 @@ impl Protocol for DiscordProtocol {
             children: None,
             preferred_render_style: RenderStyle::IconsAndText(false),
             placement: ChannelPlacement::Side(false),
-        });
-        names.for_each(|x| {
-            api.send_update(Update::NewChannel(x));
+        }).collect::<Vec<Channel>>();
+        tokio::spawn(async move {
+            for name in names {
+                api.send_update(Update::NewChannel(name)).await.unwrap();
+            }
         });
     }
 
     fn disconnect(&mut self) {}
 
-    fn query(&mut self, query: crate::libpurpur::Query) {
+    fn query(&mut self, query: crate::Query) {
         todo!()
     }
 }
