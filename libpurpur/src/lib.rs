@@ -1,4 +1,4 @@
-use std::{thread, sync::Arc};
+use std::thread;
 
 use protocols::Protocol;
 use thiserror::Error;
@@ -75,7 +75,7 @@ impl PurpurAPI {
 pub struct Purpur {
     api: PurpurAPI,
 
-    update_receiver: Arc<AsyncReceiver<Update>>,
+    update_receiver: AsyncReceiver<Update>,
 }
 
 impl Purpur {
@@ -85,7 +85,7 @@ impl Purpur {
             api: PurpurAPI {
                 update_sender: update_send
             },
-            update_receiver: Arc::new(update_read)
+            update_receiver: update_read
         }
     }
     pub fn add_protocol(&self, mut protocol: Box<dyn Protocol + Send>) {
