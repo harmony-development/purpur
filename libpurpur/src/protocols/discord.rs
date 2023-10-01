@@ -12,6 +12,12 @@ use super::Protocol;
 
 pub struct DiscordProtocol {}
 
+impl DiscordProtocol {
+    pub fn new() -> DiscordProtocol {
+        DiscordProtocol { }
+    }
+}
+
 impl Protocol for DiscordProtocol {
     fn connect(&mut self, api: crate::PurpurAPI) {
         let client =

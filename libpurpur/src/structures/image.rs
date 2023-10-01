@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// An image object
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Image {
     /// Url resource that gets cached clientside automatically when first requested
     Url(String),

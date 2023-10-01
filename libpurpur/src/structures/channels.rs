@@ -1,8 +1,9 @@
 use super::image::Image;
 use super::Identifier;
+use serde::{Serialize, Deserialize};
 
 /// The style that the child channels get rendered as
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RenderStyle {
     /// Renders as a icon with a tooltip when hovered
     IconsOnly,
@@ -14,7 +15,7 @@ pub enum RenderStyle {
 }
 
 /// The placement of the child channel list
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ChannelPlacement {
     /// Place the child channels "under" the current channel
     Under,
@@ -23,7 +24,7 @@ pub enum ChannelPlacement {
     Side(bool),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Channel {
     pub id: Identifier<Channel>,
     pub name: String,

@@ -7,6 +7,12 @@ use super::Protocol;
 
 pub struct IRCProtocol {}
 
+impl IRCProtocol {
+    pub fn new() -> IRCProtocol {
+        IRCProtocol {  }
+    }
+}
+
 impl Protocol for IRCProtocol {
     fn connect(&mut self, api: PurpurAPI) {
         println!("meow1");

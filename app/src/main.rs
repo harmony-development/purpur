@@ -2,23 +2,21 @@ use std::thread;
 
 use dotenv::dotenv;
 use gtk::{
-    gio,
     glib::{self, clone, MainContext, Priority},
     prelude::*,
     Application, ApplicationWindow, Label, ListItem, ListView, NoSelection,
     ScrolledWindow, SignalListItemFactory, StringList, StringObject,
 };
-use libpurpur::{protocols::matrix::MatrixProtocol, PurpurAPI, Update};
+use libpurpur::{protocols::matrix::MatrixProtocol, Update, Purpur};
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::{fmt, prelude::*};
-use tokio::sync::mpsc;
-
-use libpurpur::protocols::{BuiltinProtocols, Protocol};
 
 pub mod ui;
 
 fn main() -> glib::ExitCode {
     dotenv().ok();
+
+    let purpur = Purpur::new();
 
     let fmt_layer = fmt::layer();
     let filter_layer = tracing_subscriber::filter::Targets::new()
@@ -39,18 +37,16 @@ fn main() -> glib::ExitCode {
 
     // Connect to "activate" signal of `app`
     app.connect_activate(move |app| {
-        let (update_tx, mut update_rx) = mpsc::channel(32);
+        let borrowed_purpur = purpur.clone();
         let (glib_update_tx, glib_update_rx) = MainContext::channel::<Update>(Priority::DEFAULT);
-        thread::spawn(|| {
+        thread::spawn(move || {
             tokio::spawn(async move {
-                while let Some(message) = update_rx.recv().await {
+                while let Some(message) = borrowed_purpur.receive().await {
                     glib_update_tx.send(message).unwrap();
                 }
             });
         });
-        let api = PurpurAPI::new(update_tx);
-        let mut protocol = BuiltinProtocols::from(MatrixProtocol::new());
-        gio::spawn_blocking(move || protocol.connect(api));
+        purpur.add_protocol(Box::new(MatrixProtocol::new()));
 
         let model = StringList::default();
 

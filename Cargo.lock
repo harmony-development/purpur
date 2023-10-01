@@ -2477,10 +2477,20 @@ dependencies = [
  "kanal",
  "matrix-sdk",
  "matrix-sdk-ui",
+ "serde",
  "thiserror",
  "tokio",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "libpurpurc"
+version = "0.1.0"
+dependencies = [
+ "libpurpur",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

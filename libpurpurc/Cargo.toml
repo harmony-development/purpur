@@ -1,0 +1,12 @@
+[package]
+name = "libpurpurc"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+libpurpur = { path = "../libpurpur" }
+tokio = { version = "1.32.0", features = ["full"] }
+serde_json = "1.0"

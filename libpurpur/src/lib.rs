@@ -1,5 +1,9 @@
+use std::thread;
+
+use protocols::Protocol;
 use thiserror::Error;
-use tokio::sync::mpsc::Sender;
+use kanal::{AsyncReceiver, AsyncSender};
+use serde::{Serialize, Deserialize};
 
 use self::structures::{
     channels::{Channel, ChannelPlacement, RenderStyle},
@@ -25,10 +29,12 @@ const _: () = {
     fn assert() {
         assert_type::<Update>();
         assert_type::<Query>();
+        assert_type::<PurpurAPI>();
+        assert_type::<Purpur>();
     }
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Update {
     /// A new channel has been loaded/created.
     /// This update is guaranteed to come before the application has its ID.
@@ -43,7 +49,7 @@ pub enum Update {
     NewMessage(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Query {
     DismissNotification(Identifier<Notification>),
 }
@@ -56,14 +62,39 @@ pub enum SDKError {
 
 #[derive(Clone)]
 pub struct PurpurAPI {
-    update_sender: Sender<Update>,
+    update_sender: AsyncSender<Update>,
 }
 
 impl PurpurAPI {
     pub async fn send_update(&self, action: Update) -> Result<(), SDKError> {
         self.update_sender.send(action).await.map_err(|_| SDKError::SendFailure)
     }
-    pub fn new(with: Sender<Update>) -> PurpurAPI {
-        PurpurAPI { update_sender: with }
+}
+
+#[derive(Clone)]
+pub struct Purpur {
+    api: PurpurAPI,
+
+    update_receiver: AsyncReceiver<Update>,
+}
+
+impl Purpur {
+    pub fn new() -> Purpur {
+        let (update_send, update_read) = kanal::bounded_async(32);
+        Purpur {
+            api: PurpurAPI {
+                update_sender: update_send
+            },
+            update_receiver: update_read
+        }
+    }
+    pub fn add_protocol(&self, mut protocol: Box<dyn Protocol + Send>) {
+        let api = self.api.clone();
+        thread::spawn(move || {
+            protocol.connect(api);
+        });
+    }
+    pub async fn receive(&self) -> Option<Update> {
+        self.update_receiver.recv().await.ok()
     }
 }
