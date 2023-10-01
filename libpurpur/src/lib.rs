@@ -1,5 +1,9 @@
+use std::{thread, cell::RefCell, sync::{Arc}};
+
+use protocols::Protocol;
 use thiserror::Error;
-use tokio::sync::mpsc::Sender;
+use tokio::sync::{mpsc::{Sender, Receiver, self}, Mutex};
+use serde::{Serialize, Deserialize};
 
 use self::structures::{
     channels::{Channel, ChannelPlacement, RenderStyle},
@@ -25,10 +29,12 @@ const _: () = {
     fn assert() {
         assert_type::<Update>();
         assert_type::<Query>();
+        assert_type::<PurpurAPI>();
+        assert_type::<Purpur>();
     }
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Update {
     /// A new channel has been loaded/created.
     /// This update is guaranteed to come before the application has its ID.
@@ -43,7 +49,7 @@ pub enum Update {
     NewMessage(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Query {
     DismissNotification(Identifier<Notification>),
 }
@@ -63,7 +69,32 @@ impl PurpurAPI {
     pub async fn send_update(&self, action: Update) -> Result<(), SDKError> {
         self.update_sender.send(action).await.map_err(|_| SDKError::SendFailure)
     }
-    pub fn new(with: Sender<Update>) -> PurpurAPI {
-        PurpurAPI { update_sender: with }
+}
+
+#[derive(Clone)]
+pub struct Purpur {
+    api: PurpurAPI,
+
+    update_receiver: Arc<Mutex<Receiver<Update>>>,
+}
+
+impl Purpur {
+    pub fn new() -> Purpur {
+        let (update_tx, update_rx) = mpsc::channel(32);
+        Purpur {
+            api: PurpurAPI {
+                update_sender: update_tx
+            },
+            update_receiver: Arc::new(Mutex::new(update_rx))
+        }
+    }
+    pub fn add_protocol(&self, mut protocol: Box<dyn Protocol + Send>) {
+        let api = self.api.clone();
+        thread::spawn(move || {
+            protocol.connect(api);
+        });
+    }
+    pub async fn receive(&self) -> Option<Update> {
+        self.update_receiver.lock().await.recv().await
     }
 }
