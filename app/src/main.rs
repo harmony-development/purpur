@@ -2,18 +2,14 @@ use std::thread;
 
 use dotenv::dotenv;
 use gtk::{
-    gio,
     glib::{self, clone, MainContext, Priority},
     prelude::*,
     Application, ApplicationWindow, Label, ListItem, ListView, NoSelection,
     ScrolledWindow, SignalListItemFactory, StringList, StringObject,
 };
-use libpurpur::{protocols::matrix::MatrixProtocol, PurpurAPI, Update, Purpur};
+use libpurpur::{protocols::matrix::MatrixProtocol, Update, Purpur};
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::{fmt, prelude::*};
-use tokio::sync::mpsc;
-
-use libpurpur::protocols::{BuiltinProtocols, Protocol};
 
 pub mod ui;
 

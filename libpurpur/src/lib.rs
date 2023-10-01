@@ -1,8 +1,8 @@
-use std::{thread, cell::RefCell, sync::{Arc}};
+use std::{thread, sync::Arc};
 
 use protocols::Protocol;
 use thiserror::Error;
-use tokio::sync::{mpsc::{Sender, Receiver, self}, Mutex};
+use kanal::{AsyncReceiver, AsyncSender};
 use serde::{Serialize, Deserialize};
 
 use self::structures::{
@@ -62,7 +62,7 @@ pub enum SDKError {
 
 #[derive(Clone)]
 pub struct PurpurAPI {
-    update_sender: Sender<Update>,
+    update_sender: AsyncSender<Update>,
 }
 
 impl PurpurAPI {
@@ -75,17 +75,17 @@ impl PurpurAPI {
 pub struct Purpur {
     api: PurpurAPI,
 
-    update_receiver: Arc<Mutex<Receiver<Update>>>,
+    update_receiver: Arc<AsyncReceiver<Update>>,
 }
 
 impl Purpur {
     pub fn new() -> Purpur {
-        let (update_tx, update_rx) = mpsc::channel(32);
+        let (update_send, update_read) = kanal::bounded_async(32);
         Purpur {
             api: PurpurAPI {
-                update_sender: update_tx
+                update_sender: update_send
             },
-            update_receiver: Arc::new(Mutex::new(update_rx))
+            update_receiver: Arc::new(update_read)
         }
     }
     pub fn add_protocol(&self, mut protocol: Box<dyn Protocol + Send>) {
@@ -95,6 +95,6 @@ impl Purpur {
         });
     }
     pub async fn receive(&self) -> Option<Update> {
-        self.update_receiver.lock().await.recv().await
+        self.update_receiver.recv().await.ok()
     }
 }
