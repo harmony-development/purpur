@@ -7,7 +7,7 @@ use gtk::{
     Application, ApplicationWindow, Label, ListItem, ListView, NoSelection,
     ScrolledWindow, SignalListItemFactory, StringList, StringObject,
 };
-use libpurpur::{protocols::matrix::MatrixProtocol, Update, Purpur};
+use libpurpur::{protocols::{matrix::MatrixProtocol, discord::DiscordProtocol}, Update, Purpur};
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::{fmt, prelude::*};
 
@@ -46,7 +46,7 @@ fn main() -> glib::ExitCode {
                 }
             });
         });
-        purpur.add_protocol(Box::new(MatrixProtocol::new()));
+        purpur.add_protocol(Box::new(DiscordProtocol::new()));
 
         let model = StringList::default();
 
