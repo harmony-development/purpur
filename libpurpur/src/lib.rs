@@ -76,7 +76,7 @@ impl PurpurAPI {
 #[derive(Clone)]
 pub struct Purpur {
     api: PurpurAPI,
-    update_receiver: AsyncReceiver<Update>,
+    pub update_receiver: AsyncReceiver<Update>,
 }
 
 impl Purpur {
@@ -94,8 +94,5 @@ impl Purpur {
         thread::spawn(move || {
             protocol.connect(api);
         });
-    }
-    pub async fn receive(&self) -> Option<Update> {
-        self.update_receiver.recv().await.ok()
     }
 }
