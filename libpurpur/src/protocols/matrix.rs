@@ -4,7 +4,7 @@ use super::Protocol;
 use crate::PurpurAPI;
 use eyeball_im::VectorDiff;
 use futures::StreamExt;
-use imbl::{HashMap, HashSet};
+use imbl::HashMap;
 use matrix_sdk::{
     ruma::{user_id::UserId, OwnedRoomId, RoomId},
     Client, RoomListEntry,
@@ -15,7 +15,7 @@ use matrix_sdk_ui::{
     RoomListService,
 };
 use tokio::runtime::Runtime;
-use tracing::{debug, error, info, trace, Instrument};
+use tracing::{debug, error, info, Instrument};
 
 enum RoomTrackingState {}
 

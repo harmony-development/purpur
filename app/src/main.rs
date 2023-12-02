@@ -10,7 +10,8 @@ use ui::App;
 
 pub mod ui;
 
-fn main() -> glib::ExitCode {
+#[tokio::main]
+async fn main() -> glib::ExitCode {
     dotenv().ok();
 
     let fmt_layer = fmt::layer();

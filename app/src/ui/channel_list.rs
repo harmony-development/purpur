@@ -17,10 +17,10 @@ impl App {
             list_item.set_child(Some(&label));
             list_item
                 .property_expression("item")
-                .chain_property::<StringObject>("label")
+                .chain_property::<StringObject>("string")
                 .bind(&label, "label", Widget::NONE);
         });
-        let selection_model = NoSelection::new(Some(self.models.message_list.clone()));
+        let selection_model = NoSelection::new(Some(self.models.channel_list.clone()));
         let list_box = ListView::new(Some(selection_model), Some(factory));
 
         let scrolled_window = ScrolledWindow::builder()
