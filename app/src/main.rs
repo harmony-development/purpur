@@ -1,7 +1,9 @@
-use std::thread;
-
 use dotenv::dotenv;
-use gtk::{glib, prelude::ApplicationExtManual};
+use gtk::{
+    glib,
+    prelude::{ApplicationExt, ApplicationExtManual},
+    Application,
+};
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::{fmt, prelude::*};
 use ui::App;
@@ -23,7 +25,14 @@ fn main() -> glib::ExitCode {
         .with(fmt_layer)
         .init();
 
-    let app = App::new();
+    let gtk_app = Application::builder()
+        .application_id("dev.blusk.purpur")
+        .build();
 
-    app.gtk_app.run()
+    gtk_app.connect_activate(move |x| {
+        let mut app = App::new();
+        app.build_ui(x)
+    });
+
+    gtk_app.run()
 }
