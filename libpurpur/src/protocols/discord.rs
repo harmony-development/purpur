@@ -14,7 +14,7 @@ pub struct DiscordProtocol {}
 
 impl DiscordProtocol {
     pub fn new() -> DiscordProtocol {
-        DiscordProtocol { }
+        DiscordProtocol {}
     }
 }
 
@@ -24,14 +24,17 @@ impl Protocol for DiscordProtocol {
             Discord::from_user_token(std::env::var("DISCORD_TOKEN").unwrap().as_str()).unwrap();
         let (conn, _) = client.connect().unwrap();
         let servers = client.get_servers().unwrap();
-        let names = servers.iter().map(|x| Channel {
-            id: Identifier::new(0.to_string()),
-            name: x.name.clone(),
-            image: Image::Url("https://picsum.photos/200".into()),
-            children: None,
-            preferred_render_style: RenderStyle::IconsAndText(false),
-            placement: ChannelPlacement::Side(false),
-        }).collect::<Vec<Channel>>();
+        let names = servers
+            .iter()
+            .map(|x| Channel {
+                id: Identifier::new(0.to_string()),
+                name: x.name.clone(),
+                image: Some(Image::Url("https://picsum.photos/200".into())),
+                children: None,
+                preferred_render_style: RenderStyle::IconsAndText(false),
+                placement: ChannelPlacement::Side(false),
+            })
+            .collect::<Vec<Channel>>();
         tokio::spawn(async move {
             for name in names {
                 api.send_update(Update::NewChannel(name)).await.unwrap();

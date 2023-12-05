@@ -25,3 +25,4 @@ pub mod image;
 pub mod messages;
 pub mod notification;
 pub mod users;
+pub mod widget;

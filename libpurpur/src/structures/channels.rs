@@ -28,7 +28,7 @@ pub enum ChannelPlacement {
 pub struct Channel {
     pub id: Identifier<Channel>,
     pub name: String,
-    pub image: Image,
+    pub image: Option<Image>,
     pub children: Option<Vec<Identifier<Channel>>>,
     pub preferred_render_style: RenderStyle,
     pub placement: ChannelPlacement,

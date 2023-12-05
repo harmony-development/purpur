@@ -14,23 +14,31 @@
       systems = ["x86_64-linux"];
       imports = [
         nci.flakeModule
-        ./crates.nix
       ];
       perSystem = {
         pkgs,
         config,
         ...
       }: let
-        crateOutputs = config.nci.outputs."purpur";
+        crateOutputs = config.nci.outputs;
       in {
         nci.toolchainConfig = {
           channel = "stable";
           components = ["rust-analyzer" "rust-src" "clippy" "rustfmt"];
         };
-        devShells.default = crateOutputs.devShell.overrideAttrs (old: {
-          packages = (old.packages or []) ++ (with pkgs; [ pkg-config gtk4 openssl libsodium.dev sqlite ]);
+        nci.projects."purpur" = {
+          path = ./.;
+          export = true;
+        };
+        nci.crates = {
+          "libpurpur" = {};
+          "app" = {};
+          "libpurpurc" = {};
+        };
+        devShells.default = crateOutputs.purpur.devShell.overrideAttrs (old: {
+          packages = (old.packages or []) ++ (with pkgs; [pkg-config gtk4 openssl libsodium.dev sqlite]);
         });
-        packages.default = crateOutputs.packages.release;
+        packages.default = crateOutputs."app".packages.release;
       };
     };
 }

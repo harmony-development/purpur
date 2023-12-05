@@ -1,6 +1,7 @@
 use std::thread;
 
 use protocols::Protocol;
+use structures::widget::Dialog;
 use thiserror::Error;
 use kanal::{AsyncReceiver, AsyncSender};
 use serde::{Serialize, Deserialize};
@@ -45,8 +46,9 @@ pub enum Update {
     ChannelChildren(Identifier<Channel>, Vec<Identifier<Channel>>),
     ChannelPreferredRenderStyle(Identifier<Channel>, RenderStyle),
     ChannelPlacement(Identifier<Channel>, ChannelPlacement),
-    Notification(Notification),
     NewMessage(String),
+    Notification(Notification),
+    ShowDialog(Dialog),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,8 +76,7 @@ impl PurpurAPI {
 #[derive(Clone)]
 pub struct Purpur {
     api: PurpurAPI,
-
-    update_receiver: AsyncReceiver<Update>,
+    pub update_receiver: AsyncReceiver<Update>,
 }
 
 impl Purpur {
@@ -93,8 +94,5 @@ impl Purpur {
         thread::spawn(move || {
             protocol.connect(api);
         });
-    }
-    pub async fn receive(&self) -> Option<Update> {
-        self.update_receiver.recv().await.ok()
     }
 }
